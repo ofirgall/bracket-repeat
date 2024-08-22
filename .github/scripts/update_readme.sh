@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DOC_FILE=doc/{PLUGIN_NAME}.txt
+DOC_FILE=doc/bracket-repeat.txt
 
 extract_usage() {
     local found_setup=false
