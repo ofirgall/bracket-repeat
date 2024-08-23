@@ -55,11 +55,30 @@ local function get_bracket_char(lhs)
 end
 
 local function rebind_bracket(keymap, bracket_char)
-	local cb = wrap_rhs(keymap.mode, keymap.rhs, keymap.callback, bracket_char)
-	vim.keymap.del(keymap.mode, keymap.lhs)
-	vim.keymap.set(keymap.mode, keymap.lhs, cb)
+	if keymap.buffer ~= 0 then
+		vim.api.nvim_buf_del_keymap(keymap.buffer, keymap.mode, keymap.lhs)
+	else
+		vim.api.nvim_del_keymap(keymap.mode, keymap.lhs)
+	end
 
-	return cb
+	local opts = {
+		desc = keymap.desc,
+		expr = keymap.expr,
+		noremap = keymap.noremap,
+		nowait = keymap.nowait,
+		script = keymap.script,
+		silent = keymap.silent,
+		replace_keycodes = keymap.replace_keycodes,
+	}
+	opts.callback = wrap_rhs(keymap.mode, keymap.rhs, keymap.callback, bracket_char)
+
+	if keymap.buffer ~= 0 then
+		api.nvim_buf_set_keymap(keymap.buffer, keymap.mode, keymap.lhs, "", opts)
+	else
+		api.nvim_set_keymap(keymap.mode, keymap.lhs, "", opts)
+	end
+
+	return opts.callback
 end
 
 local function set_keymap_override(mode, lhs, rhs, opts)
@@ -97,22 +116,6 @@ M.setup = function(config)
 
 	-- XXX: config next and prev
 	-- XXX: try to repeat only with []
-	-- XXX: check keymap opts are relied ok (desc, expr and such)
-	-- {
-	-- 	buffer = 0,
-	-- 	callback = <function 1>,
-	-- 	desc = "Next error",
-	-- 	expr = 0,
-	-- 	lhs = "]g",
-	-- 	lhsraw = "]g",
-	-- 	lnum = 0,
-	-- 	mode = "n",
-	-- 	noremap = 1,
-	-- 	nowait = 0,
-	-- 	script = 0,
-	-- 	sid = -8,
-	-- 	silent = 1
-	-- }
 
 	local keymaps = api.nvim_get_keymap("n")
 	for _, keymap in ipairs(keymaps) do
