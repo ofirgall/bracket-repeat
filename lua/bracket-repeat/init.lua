@@ -2,6 +2,7 @@
 local M = {}
 
 local api = vim.api
+local orig_api = {}
 
 local default_config = {}
 
@@ -10,8 +11,48 @@ local loaded_config = default_config
 local last_bracket = nil
 
 local function repeat_last()
-	print("repeating", last_bracket)
-	last_bracket()
+	if last_bracket ~= nil then
+		last_bracket()
+	end
+end
+
+local function wrap_rhs(mode, rhs, callback)
+	local orig_cb = nil
+	if callback then
+		orig_cb = callback
+	else
+		orig_cb = function()
+			vim.api.nvim_feedkeys(rhs, mode, true)
+		end
+	end
+
+	return function()
+		last_bracket = orig_cb
+		orig_cb()
+	end
+end
+
+local function rebind_bracket(keymap)
+	vim.keymap.del(keymap.mode, keymap.lhs)
+	vim.keymap.set(keymap.mode, keymap.lhs, wrap_rhs(keymap.mode, keymap.rhs, keymap.callback))
+end
+
+local function set_keymap_override(mode, lhs, rhs, opts)
+	if lhs == "]c" then
+		opts.callback = wrap_rhs(mode, rhs, opts.callback)
+		orig_api.nvim_set_keymap(mode, lhs, "", opts)
+	else
+		orig_api.nvim_set_keymap(mode, lhs, rhs, opts)
+	end
+end
+
+local function set_keymap_buf_override(buffer, mode, lhs, rhs, opts)
+	if lhs == "]c" then
+		opts.callback = wrap_rhs(mode, rhs, opts.callback)
+		orig_api.nvim_buf_set_keymap(buffer, mode, lhs, "", opts)
+	else
+		orig_api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
+	end
 end
 
 ---@param config table user config
@@ -39,24 +80,24 @@ M.setup = function(config)
 	-- 	silent = 1
 	-- }
 
-	-- XXX: hook to nvim_get_keymap for lazy binds
 	-- XXX: both directions
 	-- TODO: go over all keymaps and find all bracket binds
 	local lhs = "]g"
 	local keymaps = api.nvim_get_keymap("n")
 	for _, keymap in ipairs(keymaps) do
 		if keymap.lhs == lhs then
-			local orig_cb = keymap.callback
-			vim.keymap.del("n", lhs)
-			vim.keymap.set("n", lhs, function()
-				last_bracket = orig_cb
-				orig_cb()
-			end)
-			vim.print(keymap)
+			rebind_bracket(keymap)
 		end
 	end
 
 	vim.keymap.set("n", ";", repeat_last)
+
+	-- Hook to nvim_set_keymap and nvim_buf_set_keymap
+	orig_api.nvim_set_keymap = api.nvim_set_keymap
+	api.nvim_set_keymap = set_keymap_override
+
+	orig_api.nvim_buf_set_keymap = api.nvim_buf_set_keymap
+	api.nvim_buf_set_keymap = set_keymap_buf_override
 end
 
 return M
