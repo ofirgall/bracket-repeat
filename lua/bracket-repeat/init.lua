@@ -21,6 +21,33 @@ local function repeat_last(dir)
 	end
 end
 
+local is_bracket_binds_overridden = {}
+-- Bind ']' and '[' to repeat until cursor moved
+local function bind_bracket_repeat(bufnr)
+	if not is_bracket_binds_overridden[bufnr] then
+		vim.keymap.set("n", "]", function()
+			repeat_last("next")
+		end, { nowait = true, buffer = bufnr })
+
+		vim.keymap.set("n", "[", function()
+			repeat_last("prev")
+		end, { nowait = true, buffer = bufnr })
+
+		is_bracket_binds_overridden[bufnr] = true
+
+		-- Delete bracket repeat binds after cursor moves
+		api.nvim_create_autocmd("CursorMoved", {
+			once = true,
+			callback = function()
+				vim.keymap.del("n", "]", { buffer = bufnr })
+				vim.keymap.del("n", "[", { buffer = bufnr })
+
+				is_bracket_binds_overridden[bufnr] = false
+			end,
+		})
+	end
+end
+
 local function wrap_rhs(mode, rhs, callback, bracket_char)
 	local orig_cb = nil
 	if callback then
@@ -33,6 +60,16 @@ local function wrap_rhs(mode, rhs, callback, bracket_char)
 
 	return function()
 		last_bracket = bracket_char
+
+		local bufnr = api.nvim_get_current_buf()
+		-- Waiting to cursor to move from bracet movement to bind the repeat buttons
+		api.nvim_create_autocmd("CursorMoved", {
+			once = true,
+			callback = function()
+				bind_bracket_repeat(bufnr)
+			end,
+		})
+
 		orig_cb()
 	end
 end
@@ -114,9 +151,6 @@ M.setup = function(config)
 	config = config or {}
 	loaded_config = vim.tbl_deep_extend("keep", config, default_config)
 
-	-- XXX: config next and prev
-	-- XXX: try to repeat only with []
-
 	local keymaps = api.nvim_get_keymap("n")
 	for _, keymap in ipairs(keymaps) do
 		local bracket_char, dir = get_bracket_char(keymap.lhs)
@@ -124,13 +158,6 @@ M.setup = function(config)
 			binds_map[dir][bracket_char] = rebind_bracket(keymap, bracket_char)
 		end
 	end
-
-	vim.keymap.set("n", ";", function()
-		repeat_last("next")
-	end)
-	vim.keymap.set("n", ",", function()
-		repeat_last("prev")
-	end)
 
 	-- Hook to nvim_set_keymap and nvim_buf_set_keymap
 	orig_api.nvim_set_keymap = api.nvim_set_keymap
