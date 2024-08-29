@@ -61,12 +61,11 @@ local function wrap_rhs(mode, rhs, callback, bracket_char)
 	return function()
 		last_bracket = bracket_char
 
-		local bufnr = api.nvim_get_current_buf()
 		-- Waiting to cursor to move from bracet movement to bind the repeat buttons
 		api.nvim_create_autocmd("CursorMoved", {
 			once = true,
 			callback = function()
-				bind_bracket_repeat(bufnr)
+				bind_bracket_repeat(api.nvim_get_current_buf())
 			end,
 		})
 
