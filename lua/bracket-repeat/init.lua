@@ -11,8 +11,8 @@ local loaded_config = default_config
 local last_bracket = nil
 local last_dir = nil
 local binds_map = {
-	next = {},
-	prev = {},
+	[']'] = {}, -- next
+	['['] = {}, -- prev
 }
 
 local function repeat_last(dir)
@@ -27,11 +27,11 @@ local is_bracket_binds_overridden = {}
 local function bind_bracket_repeat(bufnr)
 	if not is_bracket_binds_overridden[bufnr] then
 		vim.keymap.set('n', ']', function()
-			repeat_last('next')
+			repeat_last(']')
 		end, { nowait = true, buffer = bufnr })
 
 		vim.keymap.set('n', '[', function()
-			repeat_last('prev')
+			repeat_last('[')
 		end, { nowait = true, buffer = bufnr })
 
 		vim.keymap.set('n', ';', function()
@@ -87,11 +87,11 @@ local function get_bracket_char(lhs)
 	end
 	local first = lhs:sub(1, 1)
 	if first == ']' then
-		return lhs:sub(2), 'next'
+		return lhs:sub(2), ']'
 	end
 
 	if first == '[' then
-		return lhs:sub(2), 'prev'
+		return lhs:sub(2), '['
 	end
 
 	return nil
