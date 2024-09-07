@@ -1,0 +1,27 @@
+name: stylua
+
+on:
+  push:
+    paths:
+      - '**.lua'
+
+env:
+  PLUGIN_NAME: bracket-repeat
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    name: Format with stylua
+    steps:
+      - uses: actions/checkout@v3
+      - uses: JohnnyMorganz/stylua-action@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: .
+
+      - name: Commit
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: ${{ github.head_ref }}
+          commit_message: "chore: auto-format (stylua)"
