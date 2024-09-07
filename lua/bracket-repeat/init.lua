@@ -28,6 +28,7 @@ function M.stop(bufnr)
 	vim.keymap.del('n', ']', { buffer = bufnr })
 	vim.keymap.del('n', '[', { buffer = bufnr })
 	vim.keymap.del('n', ';', { buffer = bufnr })
+	vim.keymap.del('n', '<Esc>', { buffer = bufnr })
 
 	is_bracket_binds_overridden[bufnr] = false
 end
@@ -47,15 +48,19 @@ local function bind_bracket_repeat(bufnr)
 			repeat_last(last_dir)
 		end, { nowait = true, buffer = bufnr })
 
+		vim.keymap.set('n', '<Esc>', function()
+			M.stop(bufnr)
+		end, { nowait = true, buffer = bufnr })
+
 		is_bracket_binds_overridden[bufnr] = true
 
-		-- Delete bracket repeat binds after cursor moves
-		api.nvim_create_autocmd('CursorMoved', {
-			once = true,
-			callback = function()
-				M.stop(bufnr)
-			end,
-		})
+		-- -- Delete bracket repeat binds after cursor moves
+		-- api.nvim_create_autocmd('CursorMoved', {
+		-- 	once = true,
+		-- 	callback = function()
+		-- 		M.stop(bufnr)
+		-- 	end,
+		-- })
 	end
 end
 
