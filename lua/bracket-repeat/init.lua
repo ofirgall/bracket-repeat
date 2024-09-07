@@ -173,4 +173,12 @@ M.setup = function(config)
 	api.nvim_buf_set_keymap = set_keymap_buf_override
 end
 
+M.is_active = function()
+	return is_bracket_binds_overridden[vim.api.nvim_get_current_buf()]
+end
+
+M.get_active_bind = function()
+	return last_dir .. last_bracket
+end
+
 return M
