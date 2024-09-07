@@ -25,22 +25,22 @@ local is_bracket_binds_overridden = {}
 -- Bind ']' and '[' to repeat until cursor moved
 local function bind_bracket_repeat(bufnr)
 	if not is_bracket_binds_overridden[bufnr] then
-		vim.keymap.set("n", "]", function()
-			repeat_last("next")
+		vim.keymap.set('n', ']', function()
+			repeat_last('next')
 		end, { nowait = true, buffer = bufnr })
 
-		vim.keymap.set("n", "[", function()
-			repeat_last("prev")
+		vim.keymap.set('n', '[', function()
+			repeat_last('prev')
 		end, { nowait = true, buffer = bufnr })
 
 		is_bracket_binds_overridden[bufnr] = true
 
 		-- Delete bracket repeat binds after cursor moves
-		api.nvim_create_autocmd("CursorMoved", {
+		api.nvim_create_autocmd('CursorMoved', {
 			once = true,
 			callback = function()
-				vim.keymap.del("n", "]", { buffer = bufnr })
-				vim.keymap.del("n", "[", { buffer = bufnr })
+				vim.keymap.del('n', ']', { buffer = bufnr })
+				vim.keymap.del('n', '[', { buffer = bufnr })
 
 				is_bracket_binds_overridden[bufnr] = false
 			end,
@@ -62,7 +62,7 @@ local function wrap_rhs(mode, rhs, callback, bracket_char)
 		last_bracket = bracket_char
 
 		-- Waiting to cursor to move from bracet movement to bind the repeat buttons
-		api.nvim_create_autocmd("CursorMoved", {
+		api.nvim_create_autocmd('CursorMoved', {
 			once = true,
 			callback = function()
 				bind_bracket_repeat(api.nvim_get_current_buf())
@@ -79,12 +79,12 @@ local function get_bracket_char(lhs)
 		return nil, false
 	end
 	local first = lhs:sub(1, 1)
-	if first == "]" then
-		return lhs:sub(2), "next"
+	if first == ']' then
+		return lhs:sub(2), 'next'
 	end
 
-	if first == "[" then
-		return lhs:sub(2), "prev"
+	if first == '[' then
+		return lhs:sub(2), 'prev'
 	end
 
 	return nil
@@ -109,9 +109,9 @@ local function rebind_bracket(keymap, bracket_char)
 	opts.callback = wrap_rhs(keymap.mode, keymap.rhs, keymap.callback, bracket_char)
 
 	if keymap.buffer ~= 0 then
-		api.nvim_buf_set_keymap(keymap.buffer, keymap.mode, keymap.lhs, "", opts)
+		api.nvim_buf_set_keymap(keymap.buffer, keymap.mode, keymap.lhs, '', opts)
 	else
-		api.nvim_set_keymap(keymap.mode, keymap.lhs, "", opts)
+		api.nvim_set_keymap(keymap.mode, keymap.lhs, '', opts)
 	end
 
 	return opts.callback
@@ -123,7 +123,7 @@ local function set_keymap_override(mode, lhs, rhs, opts)
 		opts.callback = wrap_rhs(mode, rhs, opts.callback, bracket_char)
 		binds_map[dir][bracket_char] = opts.callback
 
-		orig_api.nvim_set_keymap(mode, lhs, "", opts)
+		orig_api.nvim_set_keymap(mode, lhs, '', opts)
 	else
 		orig_api.nvim_set_keymap(mode, lhs, rhs, opts)
 	end
@@ -135,7 +135,7 @@ local function set_keymap_buf_override(buffer, mode, lhs, rhs, opts)
 		opts.callback = wrap_rhs(mode, rhs, opts.callback, bracket_char)
 		binds_map[dir][bracket_char] = opts.callback
 
-		orig_api.nvim_buf_set_keymap(buffer, mode, lhs, "", opts)
+		orig_api.nvim_buf_set_keymap(buffer, mode, lhs, '', opts)
 	else
 		orig_api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
 	end
@@ -148,9 +148,9 @@ end
 ---@usage ]]
 M.setup = function(config)
 	config = config or {}
-	loaded_config = vim.tbl_deep_extend("keep", config, default_config)
+	loaded_config = vim.tbl_deep_extend('keep', config, default_config)
 
-	local keymaps = api.nvim_get_keymap("n")
+	local keymaps = api.nvim_get_keymap('n')
 	for _, keymap in ipairs(keymaps) do
 		local bracket_char, dir = get_bracket_char(keymap.lhs)
 		if bracket_char then
