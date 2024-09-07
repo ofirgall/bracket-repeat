@@ -23,6 +23,15 @@ local function repeat_last(dir)
 end
 
 local is_bracket_binds_overridden = {}
+
+function M.stop(bufnr)
+	vim.keymap.del('n', ']', { buffer = bufnr })
+	vim.keymap.del('n', '[', { buffer = bufnr })
+	vim.keymap.del('n', ';', { buffer = bufnr })
+
+	is_bracket_binds_overridden[bufnr] = false
+end
+
 -- Bind ']' and '[' to repeat until cursor moved
 local function bind_bracket_repeat(bufnr)
 	if not is_bracket_binds_overridden[bufnr] then
@@ -44,11 +53,7 @@ local function bind_bracket_repeat(bufnr)
 		api.nvim_create_autocmd('CursorMoved', {
 			once = true,
 			callback = function()
-				vim.keymap.del('n', ']', { buffer = bufnr })
-				vim.keymap.del('n', '[', { buffer = bufnr })
-				vim.keymap.del('n', ';', { buffer = bufnr })
-
-				is_bracket_binds_overridden[bufnr] = false
+				M.stop(bufnr)
 			end,
 		})
 	end
