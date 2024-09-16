@@ -1,6 +1,9 @@
 ==============================================================================
 placeholder                                                *bracket-repeat.nvim*
 
+M.stop()                                              *bracket-repeat.nvim.stop*
+
+
 M.setup({config})                                    *bracket-repeat.nvim.setup*
 
     Parameters: ~
