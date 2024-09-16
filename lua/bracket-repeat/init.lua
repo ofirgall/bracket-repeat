@@ -25,9 +25,9 @@ end
 local is_bracket_binds_overridden = {}
 
 function M.stop(bufnr)
-	vim.keymap.del('n', ']', { buffer = bufnr })
-	vim.keymap.del('n', '[', { buffer = bufnr })
 	vim.keymap.del('n', ';', { buffer = bufnr })
+	vim.keymap.del('n', ',', { buffer = bufnr })
+	vim.keymap.del('n', 'f', { buffer = bufnr })
 	vim.keymap.del('n', '<Esc>', { buffer = bufnr })
 
 	is_bracket_binds_overridden[bufnr] = false
@@ -36,16 +36,17 @@ end
 -- Bind ']' and '[' to repeat until cursor moved
 local function bind_bracket_repeat(bufnr)
 	if not is_bracket_binds_overridden[bufnr] then
-		vim.keymap.set('n', ']', function()
+		vim.keymap.set('n', ';', function()
 			repeat_last(']')
 		end, { nowait = true, buffer = bufnr })
 
-		vim.keymap.set('n', '[', function()
+		vim.keymap.set('n', ',', function()
 			repeat_last('[')
 		end, { nowait = true, buffer = bufnr })
 
-		vim.keymap.set('n', ';', function()
-			repeat_last(last_dir)
+		vim.keymap.set('n', 'f', function()
+			M.stop(bufnr)
+			api.nvim_input('f')
 		end, { nowait = true, buffer = bufnr })
 
 		vim.keymap.set('n', '<Esc>', function()
@@ -53,14 +54,6 @@ local function bind_bracket_repeat(bufnr)
 		end, { nowait = true, buffer = bufnr })
 
 		is_bracket_binds_overridden[bufnr] = true
-
-		-- -- Delete bracket repeat binds after cursor moves
-		-- api.nvim_create_autocmd('CursorMoved', {
-		-- 	once = true,
-		-- 	callback = function()
-		-- 		M.stop(bufnr)
-		-- 	end,
-		-- })
 	end
 end
 
